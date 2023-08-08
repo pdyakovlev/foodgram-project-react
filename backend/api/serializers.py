@@ -96,12 +96,6 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
                     f'Тэг {name_tag} не нейден')
         return data
 
-    def validate_cooking_time(self, cooking_time):
-        if int(cooking_time) < 1:
-            raise serializers.ValidationError(
-                'Время приготовления должно быть больше или равно 1.')
-        return cooking_time
-
     def validate_ingredients(self, ingredients):
         if not ingredients:
             raise serializers.ValidationError(
