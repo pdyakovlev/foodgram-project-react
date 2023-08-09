@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
 from django.db.models.aggregates import Count
-from django.db.models.expressions import Exists, OuterRef, Value
+from django.db.models.expressions import Value
 from django.shortcuts import get_object_or_404
 from djoser.views import UserViewSet
 from rest_framework import generics, status, viewsets
@@ -15,8 +15,7 @@ from .utils import download_shopping_cart
 from .mixins import GetObjectMixin, PermissionAndPaginationMixin
 from .filters import IngredientFilter, RecipeFilter
 from .permissions import IsAdminOrAuthorOrReadOnly
-from recipes.models import (FavoriteRecipe, Ingredient, Recipe, ShoppingCart,
-                            Subscribe, Tag)
+from recipes.models import (Ingredient, Recipe, Subscribe, Tag)
 from .serializers import (IngredientSerializer, RecipeReadSerializer,
                           RecipeWriteSerializer,
                           SubscribeSerializer, TagSerializer)
@@ -113,16 +112,6 @@ class UsersViewSet(UserViewSet):
     serializer_class = ListUserSerializer
     permission_classes = (IsAuthenticated,)
 
-    def get_queryset(self):
-        return User.objects.annotate(
-            is_subscribed=Exists(
-                self.request.user.follower.filter(
-                    author=OuterRef('id'))
-            )).prefetch_related(
-            'follower', 'following'
-        ) if self.request.user.is_authenticated else User.objects.annotate(
-            is_subscribed=Value(False))
-
     def get_serializer_class(self):
         if self.request.method.lower() == 'post':
             return CreateUserSerializer
@@ -156,24 +145,13 @@ class RecipesViewSet(viewsets.ModelViewSet):
         return RecipeWriteSerializer
 
     def get_queryset(self):
-        # Не понимаю как эту логику в поля сериализатора перенести
         return Recipe.objects.annotate(
-            is_favorited=Exists(
-                FavoriteRecipe.objects.filter(
-                    user=self.request.user, recipe=OuterRef('id'))),
-            is_in_shopping_cart=Exists(
-                ShoppingCart.objects.filter(
-                    user=self.request.user,
-                    recipe=OuterRef('id')))
+            is_in_shopping_cart=Value,
+            is_favorited=Value
         ).select_related('author').prefetch_related(
             'ingredients', 'recipe',
             'shopping_cart', 'favorite_recipe', 'tags'
-        ) if self.request.user.is_authenticated else Recipe.objects.annotate(
-            is_in_shopping_cart=Value(False),
-            is_favorited=Value(False),
-        ).select_related('author').prefetch_related(
-            'ingredients', 'recipe',
-            'shopping_cart', 'favorite_recipe', 'tags')
+        )
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
