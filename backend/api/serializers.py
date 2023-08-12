@@ -3,7 +3,6 @@ from drf_extra_fields.fields import Base64ImageField
 from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user_model
 from recipes.models import FavoriteRecipe, ShoppingCart
-from django.db.models.expressions import OuterRef
 
 from recipes.models import (Recipe, Ingredient,
                             Tag, Subscribe,
@@ -52,7 +51,7 @@ class UserRecipeSerializer(
         if request.user.is_anonymous:
             return False
 
-        return obj.author.filter(user=request.user).exists()
+        return Recipe.objects.filter(author=request.user).exists()
 
     class Meta:
         model = User
@@ -167,18 +166,20 @@ class RecipeReadSerializer(serializers.ModelSerializer):
     def get_is_favorited(self, obj):
         request = self.context.get('request')
         user = request.user
-        if user.is_authenticated:
-            return FavoriteRecipe.objects.filter(
-                user=self.request.user, recipe=OuterRef('id')).exists()
-        return False
+        if not user.is_authenticated:
+            return False
+
+        return FavoriteRecipe.objects.filter(
+            user=user, recipe=obj).exists()
 
     def get_is_in_shopping_cart(self, obj):
         request = self.context.get('request')
         user = request.user
-        if user.is_authenticated:
-            return ShoppingCart.objects.filter(
-                user=self.request.user, recipe=OuterRef('id')).exists()
-        return False
+        if not user.is_authenticated:
+            return False
+
+        return ShoppingCart.objects.filter(
+            user=user, recipe=obj).exists()
 
     class Meta:
         model = Recipe

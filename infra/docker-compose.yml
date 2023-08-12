@@ -28,11 +28,10 @@ services:
       - ./.env
 
   nginx:
-    image: nginx:1.19.3
+    image: pdyakovlev/foodgram_gateway:latest
     ports:
       - "80:80"
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/conf.d/nginx.conf
       - static_value:/var/html/static/
       - media_value:/var/html/media/
       - ../frontend/build:/usr/share/nginx/html/

@@ -21,6 +21,7 @@ from .serializers import (IngredientSerializer, RecipeReadSerializer,
                           SubscribeSerializer, TagSerializer)
 from users.serializers import (TokenSerializer, ListUserSerializer,
                                CreateUserSerializer, PasswordUserSerializer)
+from rest_framework.pagination import PageNumberPagination
 
 User = get_user_model()
 
@@ -111,6 +112,7 @@ class AuthToken(ObtainAuthToken):
 class UsersViewSet(UserViewSet):
     serializer_class = ListUserSerializer
     permission_classes = (IsAuthenticated,)
+    pagination_class = PageNumberPagination
 
     def get_serializer_class(self):
         if self.request.method.lower() == 'post':
@@ -138,6 +140,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     filterset_class = RecipeFilter
     permission_classes = (IsAdminOrAuthorOrReadOnly,)
+    pagination_class = PageNumberPagination
 
     def get_serializer_class(self):
         if self.request.method in SAFE_METHODS:
@@ -146,8 +149,6 @@ class RecipesViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return Recipe.objects.annotate(
-            is_in_shopping_cart=Value,
-            is_favorited=Value
         ).select_related('author').prefetch_related(
             'ingredients', 'recipe',
             'shopping_cart', 'favorite_recipe', 'tags'
@@ -162,6 +163,8 @@ class RecipesViewSet(viewsets.ModelViewSet):
         permission_classes=(IsAuthenticated,))
     def download_shopping_cart(self, request):
         download_shopping_cart(self=self, request=request)
+        return Response(
+            {'message': 'Список покупок скачивается'})
 
 
 class IngredientsViewSet(

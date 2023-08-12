@@ -3,6 +3,7 @@ from django.contrib.auth import authenticate
 from django.contrib.auth.hashers import make_password
 from rest_framework import serializers
 
+from recipes.models import Subscribe
 from .models import User
 from .mixins import GetSubscribedMixin
 
@@ -41,7 +42,16 @@ class TokenSerializer(serializers.Serializer):
 
 
 class ListUserSerializer(GetSubscribedMixin, serializers.ModelSerializer):
-    is_subscribed = serializers.BooleanField(read_only=True)
+    is_subscribed = serializers.SerializerMethodField(read_only=True)
+
+    def get_is_subscribed(self, obj):
+        request = self.context.get('request')
+        user = request.user
+        if not user.is_authenticated:
+            return False
+
+        return Subscribe.objects.filter(
+            user=user).exists()
 
     class Meta:
         model = User
