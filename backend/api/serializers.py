@@ -2,11 +2,12 @@ from rest_framework import serializers
 from drf_extra_fields.fields import Base64ImageField
 from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user_model
-from recipes.models import FavoriteRecipe, ShoppingCart
 
 from recipes.models import (Recipe, Ingredient,
                             Tag, Subscribe,
-                            RecipeIngredient)
+                            RecipeIngredient,
+                            FavoriteRecipe,
+                            ShoppingCart)
 from users.mixins import GetSubscribedMixin
 
 User = get_user_model()
@@ -205,7 +206,7 @@ class SubscribeSerializer(serializers.ModelSerializer):
     last_name = serializers.CharField(
         source='author.last_name')
     recipes = serializers.SerializerMethodField()
-    is_subscribed = serializers.BooleanField(
+    is_subscribed = serializers.SerializerMethodField(
         read_only=True)
     recipes_count = serializers.IntegerField(
         read_only=True)
@@ -225,3 +226,12 @@ class SubscribeSerializer(serializers.ModelSerializer):
         return SubscribeRecipeSerializer(
             recipes,
             many=True).data
+
+    def get_is_subscribed(self, obj):
+        request = self.context.get('request')
+        user = request.user
+        if not user.is_authenticated:
+            return False
+
+        return Subscribe.objects.filter(
+            user=user).exists()

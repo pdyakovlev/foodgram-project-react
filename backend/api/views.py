@@ -3,6 +3,7 @@ from django.contrib.auth.hashers import make_password
 from django.db.models.aggregates import Count
 from django.db.models.expressions import Value
 from django.shortcuts import get_object_or_404
+from django.http import FileResponse
 from djoser.views import UserViewSet
 from rest_framework import generics, status, viewsets
 from rest_framework.authtoken.models import Token
@@ -11,11 +12,11 @@ from rest_framework.decorators import action, api_view
 from rest_framework.permissions import (SAFE_METHODS, AllowAny,
                                         IsAuthenticated)
 from rest_framework.response import Response
-from .utils import download_shopping_cart
+from .utils import get_pdf_shopping_cart
 from .mixins import GetObjectMixin, PermissionAndPaginationMixin
 from .filters import IngredientFilter, RecipeFilter
 from .permissions import IsAdminOrAuthorOrReadOnly
-from recipes.models import (Ingredient, Recipe, Subscribe, Tag)
+from recipes.models import (Ingredient, Recipe, Subscribe, Tag, ShoppingCart)
 from .serializers import (IngredientSerializer, RecipeReadSerializer,
                           RecipeWriteSerializer,
                           SubscribeSerializer, TagSerializer)
@@ -87,7 +88,10 @@ class AddDeleteShoppingCart(
 
     def create(self, request, *args, **kwargs):
         instance = self.get_object()
-        request.user.shopping_cart.recipe.add(instance)
+        try:
+            request.user.shopping_cart.recipe.add(instance)
+        except ShoppingCart.DoesNotExist:
+            ShoppingCart.objects.create(user=request.user)
         serializer = self.get_serializer(instance)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
@@ -162,9 +166,10 @@ class RecipesViewSet(viewsets.ModelViewSet):
         methods=['get'],
         permission_classes=(IsAuthenticated,))
     def download_shopping_cart(self, request):
-        download_shopping_cart(self=self, request=request)
-        return Response(
-            {'message': 'Список покупок скачивается'})
+        page = get_pdf_shopping_cart(self, request)
+        return FileResponse(page,
+                            as_attachment=True,
+                            filename='shoppinglist.pdf')
 
 
 class IngredientsViewSet(

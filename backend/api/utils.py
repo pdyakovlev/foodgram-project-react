@@ -4,10 +4,9 @@ from reportlab.pdfgen import canvas
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from django.db.models.aggregates import Sum
-from django.http import FileResponse
 
 
-def download_shopping_cart(self, request):
+def get_pdf_shopping_cart(self, request):
     buf = io.BytesIO()
     page = canvas.Canvas(buf)
     pdfmetrics.registerFont(TTFont('Vera', 'Vera.ttf'))
@@ -21,7 +20,7 @@ def download_shopping_cart(self, request):
     page.setFont('Vera', 14)
     if shopping_cart:
         indentation = 20
-        page.drawString(x, y, 'Cписок покупок:')
+        page.drawString(x, y, 'Shopping list:')
         for index, recipe in enumerate(shopping_cart, start=1):
             page.drawString(
                 x, y - indentation,
@@ -34,14 +33,11 @@ def download_shopping_cart(self, request):
                 y = 800
         page.save()
         buf.seek(0)
-        return FileResponse(
-            buf, as_attachment=True, filename='shoppinglist.pdf')
+        return buf
     page.setFont('Vera', 24)
     page.drawString(
-        x, y, 'Cписок покупок пуст.'
+        x, y, 'Shopping list is empty.'
     )
     page.save()
     buf.seek(0)
-    return FileResponse(buf,
-                        as_attachment=True,
-                        filename='shoppinglist.pdf')
+    return buf
