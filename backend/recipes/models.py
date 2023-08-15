@@ -78,8 +78,8 @@ class Recipe(models.Model):
     pub_date = models.DateTimeField(
         'Дата публикации',
         auto_now_add=True)
-    is_favorited = models.BooleanField()
-    is_in_shopping_cart = models.BooleanField()
+    is_favorited = models.BooleanField(blank=True, default=False)
+    is_in_shopping_cart = models.BooleanField(blank=True, default=False)
 
     class Meta:
         ordering = ['-id']
