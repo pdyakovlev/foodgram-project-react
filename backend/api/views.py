@@ -18,7 +18,7 @@ from .filters import IngredientFilter, RecipeFilter
 from .permissions import IsAdminOrAuthorOrReadOnly
 from recipes.models import (Ingredient, Recipe, Subscribe, Tag, ShoppingCart)
 from .serializers import (IngredientSerializer, RecipeReadSerializer,
-                          RecipeWriteSerializer,
+                          RecipeWriteSerializer, FavoritesSerializer,
                           SubscribeSerializer, TagSerializer)
 from users.serializers import (TokenSerializer, ListUserSerializer,
                                CreateUserSerializer, PasswordUserSerializer)
@@ -170,6 +170,19 @@ class RecipesViewSet(viewsets.ModelViewSet):
         return FileResponse(page,
                             as_attachment=True,
                             filename='shoppinglist.pdf')
+
+    @action(
+        detail=False,
+        methods=['get'],
+        permission_classes=(IsAuthenticated,))
+    def favorites(self, request):
+        user = request.user
+        queryset = Subscribe.objects.filter(user=user)
+        pages = self.paginate_queryset(queryset)
+        serializer = FavoritesSerializer(
+            pages, many=True,
+            context={'request': request})
+        return self.get_paginated_response(serializer.data)
 
 
 class IngredientsViewSet(

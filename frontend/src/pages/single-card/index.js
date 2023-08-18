@@ -59,7 +59,7 @@ const SingleCard = ({ loadItem, updateOrders }) => {
         <meta property="og:title" content={name} />
       </MetaTags>
       <div className={styles['single-card']}>
-        <img src={image} alt={name} className={styles["single-card__image"]} />
+        <img src={`/media/${image}`} alt={name} className={styles["single-card__image"]} />
         <div className={styles["single-card__info"]}>
           <div className={styles["single-card__header-info"]}>
               <h1 className={styles["single-card__title"]}>{name}</h1>

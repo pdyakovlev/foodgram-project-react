@@ -27,7 +27,7 @@ SECRET_KEY = '=0n9n=!mk()uf7e-rble)3*&8sj79b309sl3%(__7j*cnp$e)q'
 DEBUG = True
 
 ALLOWED_HOSTS = [
-    '127.0.0.1',
+    'https://yapr.ddns.net',
     'web',
     'localhost',
     '*'

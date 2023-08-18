@@ -150,7 +150,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
 
 
 class RecipeReadSerializer(serializers.ModelSerializer):
-    image = Base64ImageField()
+    image = Base64ImageField(use_url=False)
     tags = TagSerializer(
         many=True,
         read_only=True)
@@ -235,3 +235,10 @@ class SubscribeSerializer(serializers.ModelSerializer):
 
         return Subscribe.objects.filter(
             user=user).exists()
+
+
+class FavoritesSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = FavoriteRecipe
+        fields = '__all__'
